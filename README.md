@@ -10,26 +10,30 @@ TODO
 Use the following options to connect to the Stargate service:
 
 ```go
-c := sg.NewClient(,
-	// Token provider options. One must be specified. For more information, see:
-	// https://stargate.io/docs/stargate/1.0/developers-guide/authnz.html
-	sg.WithStaticToken(astraToken),
-	sg.WithStaticTokenUnsafe(astraToken),
-	sg.WithTableBasedToken(serviceURL, username, password),
-	sg.WithTableBasedTokenUnsafe(serviceURL, username, password),
-	
+c := astra.NewStaticTokenClient(
+	// URL of the Stargate service to use.
+	// Example: "localhost:8090"
+	// Example: "<cluster ID>-<cluster region>.apps.astra.datastax.com:443"
+	url,
+	// 
+	token,
 	// Optional timeout for initial connection.
-	sg.WithDeadline(time.Second * 10),
-	
+	astra.WithDeadline(time.Second * 10),
 	// Optional TLS config. Assumes insecure if not specified.
-	sg.WithTLS(tlsConfig)
-	
+	astra.WithTLS(tlsConfig)
 	// Optional default keyspace in which to run queries that do not specify a
 	// keyspace.
-	sg.WithDefaultKeyspace(keyspace),
-	
-	// Optional connection parameters to pass along to the GRPC client.
-	sg.WithGRPCConnParams(connParams),
+	astra.WithDefaultKeyspace(keyspace),
+)
+// OR
+c := astra.NewTableBasedTokenClient(
+	// URL of the Stargate service to use.
+	url,
+	// Stargate auth endpoint URL.
+	serviceURL, 
+	// Username and password with which to authenticate.
+	username, password,
+	...
 )
 ```
 
@@ -38,7 +42,7 @@ c := sg.NewClient(,
 Mirroring: https://github.com/stargate/stargate/tree/master/grpc-examples
 
 ```go
-c := sg.NewClient(..., sg.WithDefaultKeyspace("ks"))
+c := astra.NewClient(..., astra.WithDefaultKeyspace("ks"))
 _, err := c.Query(ctx, `
 CREATE TABLE IF NOT EXISTS test (k text, v int, PRIMARY KEY(k, v));
 `).Exec()
@@ -55,7 +59,7 @@ q := c.QueryBuilder().InsertInto("test").Columns("k", "v").Values('b', 2)
 // Prepared statement.
 ps := c.QueryBuilder().InsertInto("test").
 	Columns("k", "v").
-	Values(sg.Placeholder(), sg.Placeholder()).
+	Values(astra.Placeholder(), astra.Placeholder()).
 	Prepare()
 q := ps.Build('c', 3)
 
@@ -64,7 +68,7 @@ q := c.Batch(
 	c.Query("INSERT INTO test (k, v) VALUES (?, ?)", 'a', 1)
 	c.QueryBuilder().InsertInto("test").Columns("k", "v").Values('b', 2),
 	ps.Build('c', 3),
-).WithOptions(&sg.BatchOptions{
+).WithOptions(&astra.BatchOptions{
 	Logged: true,
 })
 
@@ -78,7 +82,7 @@ if err != nil {
 Based on https://gist.github.com/mpenick/8b95bd6326d375de46e4fb6981dad066
 
 ```go
-c := sg.NewClient(..., sg.WithDefaultKeyspace("ks"))
+c := astra.NewClient(..., astra.WithDefaultKeyspace("ks"))
 _, err := c.Query(ctx, `
 CREATE TABLE IF NOT EXISTS test (k text, v int, name text PRIMARY KEY(k, v));
 `).Exec()
