@@ -1,6 +1,7 @@
 package astra
 
 import (
+	"math/big"
 	"net"
 	"testing"
 
@@ -40,6 +41,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		2,                                      // int_col
 		3,                                      // smallint_col
 		5,                                      // tinyint_col
+		big.NewInt(64),           // varintvalue
 		&timeUUID,                              // timeuuid_col
 		map[int]string{1: "a", 2: "b", 3: "c"}, // map_col
 		map[string][]int{"a": {1, 2}, "b": {3, 4}}, // map_list_col
@@ -64,6 +66,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		int_col,
 		smallint_col,
 		tinyint_col,
+		varint_col,
 		timeuuid_col,
 		map_col,
 		map_list_col,
@@ -71,7 +74,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		list_list_col,
 		set_col,
 		tuple_col
-	) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+	) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 		vals...,
 	).Exec()
 	if err != nil {
@@ -94,6 +97,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 			int_col,
 			smallint_col,
 			tinyint_col,
+			varint_col,
 			timeuuid_col,
 			map_col,
 			map_list_col,
@@ -122,6 +126,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		int64(2),                                 // int_col
 		int64(3),                                 // smallint_col
 		int64(5),                                 // tinyint_col
+		big.NewInt(64),           								// varintvalue
 		timeUUID,                                 // timeuuid_col
 		map[int64]string{1: "a", 2: "b", 3: "c"}, // map_col
 		map[string][]int64{"a": {1, 2}, "b": {3, 4}}, // map_list_col
@@ -188,7 +193,7 @@ func TestClient_Query_Exec_emptyCollections(t *testing.T) {
 		nil, // tuple_col
 	}
 
-	if diff := cmp.Diff(wantVals, got[0].Values()); diff != "" {
+	if diff := cmp.Diff(wantVals, got[0].Values(), cmp.AllowUnexported(big.Int{})); diff != "" {
 		t.Fatalf("got[0].Values() unexpected difference (-want +got):\n%s", diff)
 	}
 }

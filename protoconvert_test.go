@@ -1,6 +1,7 @@
 package astra
 
 import (
+	"math/big"
 	"net"
 	"testing"
 	"time"
@@ -31,6 +32,7 @@ func TestValuesToProto(t *testing.T) {
 		uint16(16),
 		uint8(8),
 		uint(1),
+		big.NewInt(16),
 		dec,
 		float32(1.23456789),
 		1.23456789,
@@ -63,6 +65,7 @@ func TestValuesToProto(t *testing.T) {
 		{Inner: &pb.Value_Int{Int: 16}},
 		{Inner: &pb.Value_Int{Int: 8}},
 		{Inner: &pb.Value_Int{Int: 1}},
+		{Inner: &pb.Value_Varint{Varint: &pb.Varint{Value: []byte{0x10}}}},
 		{Inner: &pb.Value_Decimal{Decimal: &pb.Decimal{
 			Scale: 8, Value: []byte{0x07, 0x5b, 0xcd, 0x15},
 		}}},
@@ -158,6 +161,7 @@ func TestProtosToValue(t *testing.T) {
 	in := []*pb.Value{
 		{Inner: &pb.Value_Null_{Null: &pb.Value_Null{}}},
 		{Inner: &pb.Value_Int{Int: 1}},
+		{Inner: &pb.Value_Varint{Varint: &pb.Varint{Value: []byte{0x10}}}},
 		{Inner: &pb.Value_Float{Float: 1.23456789}},
 		{Inner: &pb.Value_Double{Double: 1.23456789}},
 		{Inner: &pb.Value_Decimal{Decimal: &pb.Decimal{Value: []byte{0x07, 0x5b, 0xcd, 0x15}, Scale: 8}}},
@@ -223,6 +227,7 @@ func TestProtosToValue(t *testing.T) {
 	want := []interface{}{
 		nil,
 		int64(1),
+		big.NewInt(16),
 		float32(1.23456789),
 		1.23456789,
 		wdec,
@@ -239,7 +244,7 @@ func TestProtosToValue(t *testing.T) {
 		map[string]int64{"one": 1},
 	}
 
-	if diff := cmp.Diff(want, got); diff != "" {
+	if diff := cmp.Diff(want, got, cmp.AllowUnexported(big.Int{})); diff != "" {
 		t.Fatalf("protosToValue(%v) unexpected difference (-want +got):\n%s", in, diff)
 	}
 }
