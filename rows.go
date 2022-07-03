@@ -48,7 +48,7 @@ func newRowsFromResultSet(rs *pb.ResultSet) (Rows, error) {
 
 	res := make(Rows, len(rs.Rows))
 	for i, row := range rs.Rows {
-		vs, err := protosToValue(row.Values)
+		vs, err := protosToValue(row.Values, rs.Columns)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert row %q at index %d: %w", row, i, err)
 		}
