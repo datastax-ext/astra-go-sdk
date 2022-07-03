@@ -123,13 +123,12 @@ func protoToValue(value *pb.Value) (any, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse UUID: %v", err)
 		}
-		return &id, nil
+		return id, nil
 	case *pb.Value_Date:
 		d := time.Unix(int64((time.Duration(v.Date)*24*time.Hour)/time.Second), 0).UTC()
 		return &d, nil
 	case *pb.Value_Time:
-		t := time.Duration(v.Time)
-		return &t, nil
+		return time.Duration(v.Time), nil
 		// TODO: add decimal support
 		// TODO: add UDT support
 		// TODO: add varint support
