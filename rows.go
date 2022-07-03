@@ -14,11 +14,16 @@ type colSpec struct {
 // Row represents a row of data from an Astra table.
 type Row struct {
 	spec   *colSpec
-	values []interface{}
+	values []any
+}
+
+// Values returns the values in the row.
+func (r *Row) Values() []any {
+	return r.values
 }
 
 // String returns a string representation of the values in the row.
-func (r Row) String() string {
+func (r *Row) String() string {
 	return fmt.Sprintf("%v", r.values)
 }
 

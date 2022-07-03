@@ -64,9 +64,13 @@ func ExampleClient_Query() {
 	}
 
 	for _, row := range rows {
-		fmt.Println(row)
+		vals := row.Values()
+		id := vals[0].(uuid.UUID)
+		name := vals[1].(string)
+		age := vals[2].(int64)
+		fmt.Printf("id: %s, name: %s, age: %d\n", id, name, age)
 	}
 
 	// Output:
-	// [12345678-1234-5678-1234-567812345678 Alice 30]
+	// id: 12345678-1234-5678-1234-567812345678, name: Alice, age: 30
 }
