@@ -1,6 +1,7 @@
 # astra-go-sdk
 
 [![License Apache2](https://img.shields.io/hexpm/l/plug.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Go Reference](https://pkg.go.dev/badge/github.com/datastax-ext/astra-go-sdk.svg)](https://pkg.go.dev/github.com/datastax-ext/astra-go-sdk)
 
 Software Development Kit wrapping Astra APIs and drivers.
 
