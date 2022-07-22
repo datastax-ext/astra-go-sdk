@@ -1,4 +1,4 @@
-module astra-go-sdk
+module github.com/datastax-ext/astra-go-sdk
 
 go 1.18
 
