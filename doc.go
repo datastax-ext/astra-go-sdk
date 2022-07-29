@@ -56,4 +56,13 @@
 //         // Do something with row.
 //     }
 //
+// Iterate over the returned Rows using a standard for loop. Call
+// Row.Values to inspect the values.
+//
+//     for _, r := range rows {
+//         vals := r.Values()
+//         someText := vals[0].(string)
+//         someNumber := vals[1].(int64)
+//     }
+//
 package astra
