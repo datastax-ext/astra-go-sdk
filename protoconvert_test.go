@@ -103,9 +103,9 @@ func TestProtosToValue(t *testing.T) {
 		"foo",
 		[]byte("bar"),
 		net.IPv4(1, 2, 3, 4).To4(),
-		&id,
+		id,
 		&wd,
-		&wt,
+		wt,
 	}
 
 	if diff := cmp.Diff(want, got); diff != "" {
