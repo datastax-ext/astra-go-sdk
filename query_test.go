@@ -135,3 +135,60 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		t.Fatalf("got[0].Values() unexpected difference (-want +got):\n%s", diff)
 	}
 }
+
+func TestClient_Query_Exec_emptyCollections(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+	c, err := stc.CreateClientWithStaticToken()
+	if err != nil {
+		t.Fatalf("failed to create client: %v", err)
+	}
+
+	id := uuid.MustParse("f066f76d-5e96-4b52-8d8a-0f51387df76b")
+	vals := []interface{}{
+		id,               // id
+		map[int]string{}, // map_col
+		[]string{},       // list_col
+		[]string{},       // set_col
+		[]interface{}{},  // tuple_col
+	}
+
+	_, err = c.Query(`INSERT INTO test.all_types (
+		id,
+		map_col,
+		list_col,
+		set_col,
+		tuple_col
+	) VALUES (?, ?, ?, ?, ?)`,
+		vals...,
+	).Exec()
+	if err != nil {
+		t.Fatalf("failed to insert values into table: %v", err)
+	}
+
+	got, err := c.Query(`
+		SELECT
+			id,
+			map_col,
+			list_col,
+			set_col,
+			tuple_col
+		FROM test.all_types WHERE id = ?
+	`, id).Exec()
+	if err != nil {
+		t.Fatalf("failed to select values: %v", err)
+	}
+
+	wantVals := []interface{}{
+		id,  // id
+		nil, // map_col
+		nil, // list_col
+		nil, // set_col
+		nil, // tuple_col
+	}
+
+	if diff := cmp.Diff(wantVals, got[0].Values()); diff != "" {
+		t.Fatalf("got[0].Values() unexpected difference (-want +got):\n%s", diff)
+	}
+}

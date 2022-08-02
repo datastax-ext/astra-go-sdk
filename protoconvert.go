@@ -207,6 +207,10 @@ func basicProtoToValue(value *pb.Value) (any, error) {
 
 func protosToMap(values []*pb.Value, spec *pb.TypeSpec_Map) (any, error) {
 	l := len(values)
+	if l == 0 {
+		return nil, nil
+	}
+
 	kts := spec.GetKey()
 	vts := spec.GetValue()
 
