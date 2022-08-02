@@ -41,7 +41,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		2,                                      // int_col
 		3,                                      // smallint_col
 		5,                                      // tinyint_col
-		big.NewInt(64),           // varintvalue
+		big.NewInt(-64),          // varintvalue
 		&timeUUID,                              // timeuuid_col
 		map[int]string{1: "a", 2: "b", 3: "c"}, // map_col
 		map[string][]int{"a": {1, 2}, "b": {3, 4}}, // map_list_col
@@ -126,8 +126,8 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		int64(2),                                 // int_col
 		int64(3),                                 // smallint_col
 		int64(5),                                 // tinyint_col
-		big.NewInt(64),           								// varintvalue
-		timeUUID,                                 // timeuuid_col
+		big.NewInt(-64),          // varintvalue
+		timeUUID,                 // timeuuid_col
 		map[int64]string{1: "a", 2: "b", 3: "c"}, // map_col
 		map[string][]int64{"a": {1, 2}, "b": {3, 4}}, // map_list_col
 		[]string{"a", "b", "c"},                      // list_col

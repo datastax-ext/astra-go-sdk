@@ -74,7 +74,7 @@ func valueToProto(value any) (*pb.Value, error) {
 		return &pb.Value{Inner: &pb.Value_Int{Int: v.UnixMilli()}}, nil
 	case *big.Int:
 		return &pb.Value{Inner: &pb.Value_Varint{Varint: &pb.Varint{
-			Value: v.Bytes(),
+			Value: encodeBigInt(v),
 		}}}, nil
 	case *decimal.Decimal:
 		return encodeDecimal(v)
@@ -204,7 +204,7 @@ func basicProtoToValue(value *pb.Value) (any, error) {
 		dec := decimal.NewFromBigInt(decodeBigInt(v.Decimal.Value), int32(-v.Decimal.Scale))
 		return dec, nil
 	case *pb.Value_Varint:
-		return big.NewInt(0).SetBytes(v.Varint.Value), nil
+		return decodeBigInt(v.Varint.Value), nil
 		// TODO: add UDT support
 	}
 	return nil, fmt.Errorf("unsupported value type: %T, value: %+v", value.GetInner(), value.GetInner())
