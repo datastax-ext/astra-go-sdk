@@ -13,12 +13,12 @@ TODO
 ### Testing
 
 To run fast unit tests, run :
-```go
+```shell
 go test ./... -run ^Test -test.short
 ```
 
 To run all unit tests, integration tests, and examples, run:
-```go
+```shell
 go test ./...
 ```
 
