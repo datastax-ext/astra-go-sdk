@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	pb "github.com/stargate/stargate-grpc-go-client/stargate/pkg/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )
@@ -14,6 +15,10 @@ import (
 func TestValuesToProto(t *testing.T) {
 	id := uuid.MustParse("12345678-1234-5678-1234-567812345678")
 	ip := net.IPv4(1, 2, 3, 4).To4()
+	dec, err := decimal.NewFromString("1.23456789")
+	if err != nil {
+		t.Fatalf("unexpected error while creating decimal: %v", err)
+	}
 
 	in := []interface{}{
 		nil,
@@ -26,6 +31,7 @@ func TestValuesToProto(t *testing.T) {
 		uint16(16),
 		uint8(8),
 		uint(1),
+		dec,
 		float32(1.23456789),
 		1.23456789,
 		true,
@@ -53,6 +59,9 @@ func TestValuesToProto(t *testing.T) {
 		{Inner: &pb.Value_Int{Int: 16}},
 		{Inner: &pb.Value_Int{Int: 8}},
 		{Inner: &pb.Value_Int{Int: 1}},
+		{Inner: &pb.Value_Decimal{Decimal: &pb.Decimal{
+			Scale: 8, Value: []byte{0x02, 0x07, 0x5b, 0xcd, 0x15},
+		}}},
 		{Inner: &pb.Value_Float{Float: 1.23456789}},
 		{Inner: &pb.Value_Double{Double: 1.23456789}},
 		{Inner: &pb.Value_Boolean{Boolean: true}},
@@ -78,6 +87,7 @@ func TestProtosToValue(t *testing.T) {
 		{Inner: &pb.Value_Int{Int: 1}},
 		{Inner: &pb.Value_Float{Float: 1.23456789}},
 		{Inner: &pb.Value_Double{Double: 1.23456789}},
+		{Inner: &pb.Value_Decimal{Decimal: &pb.Decimal{Value: []byte{0x02, 0x07, 0x5b, 0xcd, 0x15}, Scale: 8}}},
 		{Inner: &pb.Value_Boolean{Boolean: true}},
 		{Inner: &pb.Value_String_{String_: "foo"}},
 		{Inner: &pb.Value_Bytes{Bytes: []byte("bar")}},
@@ -94,11 +104,16 @@ func TestProtosToValue(t *testing.T) {
 
 	wd := time.Date(2019, 4, 24, 0, 0, 0, 0, time.UTC)
 	wt := 12*time.Hour + 23*time.Minute + 34*time.Second + 123456789
+	wdec, err := decimal.NewFromString("1.23456789")
+	if err != nil {
+		t.Fatalf("failed to create decimal: %v", wdec)
+	}
 	want := []interface{}{
 		nil,
 		int64(1),
 		float32(1.23456789),
 		1.23456789,
+		wdec,
 		true,
 		"foo",
 		[]byte("bar"),

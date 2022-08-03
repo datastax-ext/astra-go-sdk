@@ -1,11 +1,13 @@
 package astra
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	pb "github.com/stargate/stargate-grpc-go-client/stargate/pkg/proto"
 )
 
@@ -69,7 +71,10 @@ func valueToProto(value any) (*pb.Value, error) {
 		return &pb.Value{Inner: &pb.Value_Int{Int: v.UnixMilli()}}, nil
 	case time.Time:
 		return &pb.Value{Inner: &pb.Value_Int{Int: v.UnixMilli()}}, nil
-		// TODO: add decimal support
+	case *decimal.Decimal:
+		return encodeDecimal(v)
+	case decimal.Decimal:
+		return encodeDecimal(&v)
 		// TODO: add UDT support
 		// TODO: add varint support
 		// TODO: add map support
@@ -129,7 +134,16 @@ func protoToValue(value *pb.Value) (any, error) {
 		return &d, nil
 	case *pb.Value_Time:
 		return time.Duration(v.Time), nil
-		// TODO: add decimal support
+	case *pb.Value_Decimal:
+		d := make([]byte, 4)
+		binary.BigEndian.PutUint32(d, -v.Decimal.Scale)
+		d = append(d, v.Decimal.Value...)
+
+		dec := decimal.New(0, 0)
+		if err := dec.UnmarshalBinary(d); err != nil {
+			return nil, fmt.Errorf("failed to parse decimal: %w", err)
+		}
+		return dec, nil
 		// TODO: add UDT support
 		// TODO: add varint support
 		// TODO: add map support
@@ -138,4 +152,15 @@ func protoToValue(value *pb.Value) (any, error) {
 		// TODO: add tuple support
 	}
 	return nil, fmt.Errorf("unsupported value type: %T, value: %+v", value.GetInner(), value.GetInner())
+}
+
+func encodeDecimal(d *decimal.Decimal) (*pb.Value, error) {
+	b, err := d.MarshalBinary()
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal decimal binary: %w", err)
+	}
+	return &pb.Value{Inner: &pb.Value_Decimal{Decimal: &pb.Decimal{
+		Scale: uint32(-d.Exponent()),
+		Value: b[4:]},
+	}}, nil
 }
