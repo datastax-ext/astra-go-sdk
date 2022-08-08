@@ -79,6 +79,12 @@ func TestMain(m *testing.M) {
 		smallint_col smallint,
 		tinyint_col tinyint,
 		timeuuid_col timeuuid,
+		map_col map<int, text>,
+		map_list_col map<text, frozen<list<int>>>,
+		list_col list<text>,
+		list_list_col list<frozen<list<text>>>,
+		set_col set<text>,
+		tuple_col tuple<int, text, float>
 	)`).Exec()
 	if err != nil {
 		log.Fatalf("failed to create test table: %v", err)
