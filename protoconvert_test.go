@@ -60,7 +60,7 @@ func TestValuesToProto(t *testing.T) {
 		{Inner: &pb.Value_Int{Int: 8}},
 		{Inner: &pb.Value_Int{Int: 1}},
 		{Inner: &pb.Value_Decimal{Decimal: &pb.Decimal{
-			Scale: 8, Value: []byte{0x02, 0x07, 0x5b, 0xcd, 0x15},
+			Scale: 8, Value: []byte{0x07, 0x5b, 0xcd, 0x15},
 		}}},
 		{Inner: &pb.Value_Float{Float: 1.23456789}},
 		{Inner: &pb.Value_Double{Double: 1.23456789}},
@@ -87,7 +87,7 @@ func TestProtosToValue(t *testing.T) {
 		{Inner: &pb.Value_Int{Int: 1}},
 		{Inner: &pb.Value_Float{Float: 1.23456789}},
 		{Inner: &pb.Value_Double{Double: 1.23456789}},
-		{Inner: &pb.Value_Decimal{Decimal: &pb.Decimal{Value: []byte{0x02, 0x07, 0x5b, 0xcd, 0x15}, Scale: 8}}},
+		{Inner: &pb.Value_Decimal{Decimal: &pb.Decimal{Value: []byte{0x07, 0x5b, 0xcd, 0x15}, Scale: 8}}},
 		{Inner: &pb.Value_Boolean{Boolean: true}},
 		{Inner: &pb.Value_String_{String_: "foo"}},
 		{Inner: &pb.Value_Bytes{Bytes: []byte("bar")}},
