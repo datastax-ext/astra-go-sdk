@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 func TestClient_Query_Exec_allTypes(t *testing.T) {
@@ -19,6 +20,11 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 
 	id := uuid.MustParse("f066f76d-5e96-4b52-8d8a-0f51387df76b")
 	timeUUID := uuid.MustParse("30821634-13ad-11eb-adc1-0242ac120002")
+	dec, err := decimal.NewFromString("-1.23456789")
+	if err != nil {
+		t.Fatalf("unexpected error while creating decimal: %v", err)
+	}
+
 	vals := []interface{}{
 		id,                       // id
 		"alpha",                  // asciivalue
@@ -26,6 +32,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		"charlie",                // varcharvalue
 		[]byte("foo"),            // blobvalue
 		true,                     // booleanvalue
+		dec,                      // decimalvalue
 		2.2,                      // doublevalue
 		float32(3.3),             // floatvalue
 		net.ParseIP("127.0.0.1"), // inetvalue
@@ -43,6 +50,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		varchar_col,
 		blob_col,
 		boolean_col,
+		decimal_col,
 		double_col,
 		float_col,
 		inet_col,
@@ -51,7 +59,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		smallint_col,
 		tinyint_col,
 		timeuuid_col
-	) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+	) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 		vals...,
 	).Exec()
 	if err != nil {
@@ -66,6 +74,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 			varchar_col,
 			blob_col,
 			boolean_col,
+			decimal_col,
 			double_col,
 			float_col,
 			inet_col,
@@ -87,6 +96,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		"charlie",                // varcharvalue
 		[]byte("foo"),            // blobvalue
 		true,                     // booleanvalue
+		dec,                      // decimalvalue
 		2.2,                      // doublevalue
 		float32(3.3),             // floatvalue
 		net.ParseIP("127.0.0.1"), // inetvalue

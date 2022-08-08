@@ -70,6 +70,7 @@ func TestMain(m *testing.M) {
 		varchar_col varchar,
 		blob_col blob,
 		boolean_col boolean,
+		decimal_col decimal,
 		double_col double,
 		float_col float,
 		inet_col inet,

@@ -2,10 +2,12 @@ package astra
 
 import (
 	"fmt"
+	"math/big"
 	"net"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	pb "github.com/stargate/stargate-grpc-go-client/stargate/pkg/proto"
 )
 
@@ -69,7 +71,10 @@ func valueToProto(value any) (*pb.Value, error) {
 		return &pb.Value{Inner: &pb.Value_Int{Int: v.UnixMilli()}}, nil
 	case time.Time:
 		return &pb.Value{Inner: &pb.Value_Int{Int: v.UnixMilli()}}, nil
-		// TODO: add decimal support
+	case *decimal.Decimal:
+		return encodeDecimal(v)
+	case decimal.Decimal:
+		return encodeDecimal(&v)
 		// TODO: add UDT support
 		// TODO: add varint support
 		// TODO: add map support
@@ -129,7 +134,9 @@ func protoToValue(value *pb.Value) (any, error) {
 		return &d, nil
 	case *pb.Value_Time:
 		return time.Duration(v.Time), nil
-		// TODO: add decimal support
+	case *pb.Value_Decimal:
+		dec := decimal.NewFromBigInt(decodeBigInt(v.Decimal.Value), int32(-v.Decimal.Scale))
+		return dec, nil
 		// TODO: add UDT support
 		// TODO: add varint support
 		// TODO: add map support
@@ -138,4 +145,42 @@ func protoToValue(value *pb.Value) (any, error) {
 		// TODO: add tuple support
 	}
 	return nil, fmt.Errorf("unsupported value type: %T, value: %+v", value.GetInner(), value.GetInner())
+}
+
+func encodeDecimal(d *decimal.Decimal) (*pb.Value, error) {
+	return &pb.Value{Inner: &pb.Value_Decimal{Decimal: &pb.Decimal{
+		Scale: uint32(-d.Exponent()),
+		Value: encodeBigInt(d.Coefficient())},
+	}}, nil
+}
+
+func decodeBigInt(data []byte) *big.Int {
+	l := len(data)
+	i := big.NewInt(0).SetBytes(data)
+	if l > 0 && data[0]&0x80 > 0 {
+		i.Sub(i, big.NewInt(0).Lsh(big.NewInt(1), uint(l)*8))
+	}
+	return i
+}
+
+func encodeBigInt(i *big.Int) []byte {
+	switch i.Sign() {
+	case 0:
+		return []byte{0}
+	case 1:
+		b := i.Bytes()
+		if b[0]&0x80 > 0 {
+			b = append([]byte{0}, b...)
+		}
+		return b
+	case -1:
+		l := uint(i.BitLen()/8+1) * 8
+		ii := big.NewInt(0).Add(i, big.NewInt(0).Lsh(big.NewInt(1), l))
+		b := ii.Bytes()
+		if len(b) >= 2 && b[0] == 0xff && b[1]&0x80 != 0 {
+			b = b[1:]
+		}
+		return b
+	}
+	return nil
 }
