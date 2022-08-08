@@ -153,8 +153,10 @@ func protoToValue(value *pb.Value, spec *pb.TypeSpec) (any, error) {
 		r, err = basicProtoToValue(value)
 	case *pb.TypeSpec_Map_:
 		r, err = protosToMap(value.GetCollection().GetElements(), ts.Map)
-	case *pb.TypeSpec_List_, *pb.TypeSpec_Set_:
-		r, err = protoToSlice(value.GetCollection().GetElements(), spec)
+	case *pb.TypeSpec_List_:
+		r, err = protoToSlice(value.GetCollection().GetElements(), ts.List.Element)
+	case *pb.TypeSpec_Set_:
+		r, err = protoToSlice(value.GetCollection().GetElements(), ts.Set.Element)
 	case *pb.TypeSpec_Tuple_:
 		r, err = tupleProtoToSlice(value.GetCollection().GetElements(), ts.Tuple)
 	default:
@@ -249,17 +251,7 @@ func protoToSlice(values []*pb.Value, spec *pb.TypeSpec) (any, error) {
 		return nil, nil
 	}
 
-	var elSpec *pb.TypeSpec
-	switch ts := spec.GetSpec().(type) {
-	case *pb.TypeSpec_List_:
-		elSpec = ts.List.GetElement()
-	case *pb.TypeSpec_Set_:
-		elSpec = ts.Set.GetElement()
-	default:
-		return nil, fmt.Errorf("unsupported slice type: %s", ts)
-	}
-
-	v0, err := protoToValue(values[0], elSpec)
+	v0, err := protoToValue(values[0], spec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert initial slice element: %w", err)
 	}
@@ -268,7 +260,7 @@ func protoToSlice(values []*pb.Value, spec *pb.TypeSpec) (any, error) {
 	s.Index(0).Set(reflect.ValueOf(v0))
 
 	for i := 1; i < l; i++ {
-		v, err := protoToValue(values[i], elSpec)
+		v, err := protoToValue(values[i], spec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert slice element: %w", err)
 		}
