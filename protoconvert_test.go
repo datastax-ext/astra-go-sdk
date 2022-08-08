@@ -117,6 +117,7 @@ func TestProtosToValue(t *testing.T) {
 		{Name: "int_col", Type: &pb.TypeSpec{Spec: &pb.TypeSpec_Basic_{Basic: pb.TypeSpec_INT}}},
 		{Name: "float_col", Type: &pb.TypeSpec{Spec: &pb.TypeSpec_Basic_{Basic: pb.TypeSpec_FLOAT}}},
 		{Name: "double_col", Type: &pb.TypeSpec{Spec: &pb.TypeSpec_Basic_{Basic: pb.TypeSpec_DOUBLE}}},
+		{Name: "double_col", Type: &pb.TypeSpec{Spec: &pb.TypeSpec_Basic_{Basic: pb.TypeSpec_DECIMAL}}},
 		{Name: "bool_col", Type: &pb.TypeSpec{Spec: &pb.TypeSpec_Basic_{Basic: pb.TypeSpec_BOOLEAN}}},
 		{Name: "text_col", Type: &pb.TypeSpec{Spec: &pb.TypeSpec_Basic_{Basic: pb.TypeSpec_TEXT}}},
 		{Name: "blob_col", Type: &pb.TypeSpec{Spec: &pb.TypeSpec_Basic_{Basic: pb.TypeSpec_BLOB}}},
