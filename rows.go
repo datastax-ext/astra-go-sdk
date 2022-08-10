@@ -17,6 +17,19 @@ type Row struct {
 	values []any
 }
 
+// Scan copies the values from the row into the provided pointers.
+func (r *Row) Scan(dest ...any) error {
+	if len(r.values) != len(dest) {
+		return fmt.Errorf("row has %d values, got %d pointers", len(r.values), len(dest))
+	}
+	for i, v := range r.values {
+		if err := convertAssign(dest[i], v); err != nil {
+			return fmt.Errorf("failed to assign in row %q at index %d: %w", r, i, err)
+		}
+	}
+	return nil
+}
+
 // Values returns the values in the row.
 func (r *Row) Values() []any {
 	return r.values

@@ -44,7 +44,7 @@ func ExampleNewTableBasedTokenClient() {
 	}
 }
 
-func ExampleClient_Query() {
+func ExampleClient_Query_cast() {
 	c, err := NewStaticTokenClient(
 		endpoint, token,
 		WithDefaultKeyspace("example"),
@@ -73,4 +73,42 @@ func ExampleClient_Query() {
 
 	// Output:
 	// id: 12345678-1234-5678-1234-567812345678, name: Alice, age: 30
+}
+
+func ExampleClient_Query_scan() {
+	c, err := NewStaticTokenClient(
+		endpoint, token,
+		WithDefaultKeyspace("example"),
+	)
+	if err != nil {
+		log.Fatalf("failed to initialize client: %v", err)
+	}
+
+	rows, err := c.Query(
+		`SELECT id, name, age 
+		 FROM users 
+		 WHERE id = ?`,
+		uuid.MustParse("12345678-1234-5678-1234-567812345678"),
+	).Exec()
+	if err != nil {
+		log.Fatalf("failed to execute query: %v", err)
+	}
+
+	type User struct {
+		ID   uuid.UUID
+		Name string
+		Age  int16
+	}
+
+	for _, row := range rows {
+		u := &User{}
+		err := row.Scan(&u.ID, &u.Name, &u.Age)
+		if err != nil {
+			log.Fatalf("failed to scan row: %v", err)
+		}
+		fmt.Printf("%+v\n", u)
+	}
+
+	// Output:
+	// &{ID:12345678-1234-5678-1234-567812345678 Name:Alice Age:30}
 }

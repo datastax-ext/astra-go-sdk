@@ -46,3 +46,30 @@ func TestNewRowsFromResultSet(t *testing.T) {
 		t.Fatalf("newRowsFromResultSet(%q) unexpected difference (-want +got):\n%s", in, diff)
 	}
 }
+
+func TestRow_Scan(t *testing.T) {
+	in := &Row{
+		spec: &colSpec{
+			names: []string{"name", "age"},
+			idxs:  map[string]int{"name": 0, "age": 1},
+		},
+		values: []interface{}{"Alice", int64(30)},
+	}
+
+	var name string
+	var age int64
+	if err := in.Scan(&name, &age); err != nil {
+		t.Errorf("%q.Scan(%T, %T) failed to scan values: %v", in, name, age, err)
+	}
+
+	if name != "Alice" {
+		t.Errorf("%q.Scan(%T, %T) got name %q, want %q", in, name, age, name, "Alice")
+	}
+	if age != 30 {
+		t.Errorf("%q.Scan(%T, %T) got age %d, want %d", in, name, age, age, 30)
+	}
+}
+
+func TestScanToStruct(t *testing.T) {
+
+}
