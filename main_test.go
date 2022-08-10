@@ -78,6 +78,7 @@ func TestMain(m *testing.M) {
 		int_col int,
 		smallint_col smallint,
 		tinyint_col tinyint,
+		varint_col varint,
 		timeuuid_col timeuuid,
 		map_col map<int, text>,
 		map_list_col map<text, frozen<list<int>>>,
