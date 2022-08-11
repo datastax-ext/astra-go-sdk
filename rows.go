@@ -40,9 +40,6 @@ func (r *Row) String() string {
 	return fmt.Sprintf("%v", r.values)
 }
 
-// TODO: implement scanning of values into Go types.
-// TODO: implement scanning of values into structs.
-
 // Rows represents a list of Astra table rows.
 type Rows []Row
 
