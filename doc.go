@@ -8,7 +8,7 @@
 // Use the NewStaticTokenClient method to connect to Astra using a static auth
 // token. See [Astra DB Manage application tokens].
 //
-//     c := astra.NewStaticTokenClient(
+//     c, err := astra.NewStaticTokenClient(
 //         // URL of the Stargate service to use.
 //         // Example: "localhost:8090"
 //         // Example: "<cluster ID>-<cluster region>.apps.astra.datastax.com:443"
@@ -30,7 +30,7 @@
 // table auth API service URL, username, and password. See
 // [Astra DB Table-based authentication/authorization].
 //
-//     c := astra.NewTableBasedTokenClient(
+//     c, err := astra.NewTableBasedTokenClient(
 //         // URL of the Stargate service to use.
 //         astraURI,
 //         // Stargate auth endpoint URL.
