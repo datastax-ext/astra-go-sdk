@@ -44,6 +44,28 @@ func ExampleNewTableBasedTokenClient() {
 	}
 }
 
+func ExampleClient_Query_withOptions() {
+	c, err := NewStaticTokenClient(endpoint, token)
+	if err != nil {
+		log.Fatalf("failed to initialize client: %v", err)
+	}
+
+	rows, err := c.Query(
+		`SELECT * FROM users WHERE id = ?`,
+		uuid.MustParse("12345678-1234-5678-1234-567812345678"),
+	).
+		Keyspace("example").
+		Exec()
+	if err != nil {
+		log.Fatalf("failed to execute query: %v", err)
+	}
+
+	fmt.Printf("rows returned: %v", len(rows))
+
+	// Output:
+	// rows returned: 1
+}
+
 func ExampleClient_Query_cast() {
 	c, err := NewStaticTokenClient(
 		endpoint, token,
@@ -111,4 +133,68 @@ func ExampleClient_Query_scan() {
 
 	// Output:
 	// &{ID:12345678-1234-5678-1234-567812345678 Name:Alice Age:30}
+}
+
+func ExampleClient_Batch() {
+	c, err := NewStaticTokenClient(
+		endpoint, token,
+		WithDefaultKeyspace("example"),
+	)
+	if err != nil {
+		log.Fatalf("failed to initialize client: %v", err)
+	}
+
+	err = c.Batch(
+		BatchUnlogged,
+		// Table already contains a user named 'Alice'.
+		c.Query(
+			`INSERT INTO users (id, name, age) VALUES (12345678-1234-5678-1234-56781234567B,'Bob',31)`),
+		c.Query(
+			`INSERT INTO users (id, name, age) VALUES (12345678-1234-5678-1234-56781234567C,'Charles',32)`),
+	).
+		Exec()
+	if err != nil {
+		log.Fatalf("failed to insert new example users: %v", err)
+	}
+
+	rows, err := c.Query(`SELECT * FROM users`).Exec()
+	if err != nil {
+		log.Fatalf("failed to execute query: %v", err)
+	}
+
+	fmt.Printf("rows returned: %v", len(rows))
+
+	// Output:
+	// rows returned: 3
+}
+
+func ExampleClient_Batch_withOptions() {
+	c, err := NewStaticTokenClient(endpoint, token)
+	if err != nil {
+		log.Fatalf("failed to initialize client: %v", err)
+	}
+
+	err = c.Batch(
+		BatchUnlogged,
+		// Table already contains a user named 'Alice'.
+		c.Query(
+			`INSERT INTO users (id, name, age) VALUES (12345678-1234-5678-1234-56781234567B,'Bob',31)`),
+		c.Query(
+			`INSERT INTO users (id, name, age) VALUES (12345678-1234-5678-1234-56781234567C,'Charles',32)`),
+	).
+		Keyspace("example").
+		Exec()
+	if err != nil {
+		log.Fatalf("failed to insert new example users: %v", err)
+	}
+
+	rows, err := c.Query(`SELECT * FROM users`).Keyspace("example").Exec()
+	if err != nil {
+		log.Fatalf("failed to execute query: %v", err)
+	}
+
+	fmt.Printf("rows returned: %v", len(rows))
+
+	// Output:
+	// rows returned: 3
 }

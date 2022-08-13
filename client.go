@@ -131,6 +131,15 @@ func (c *Client) Query(cql string, values ...any) *Query {
 	}
 }
 
+// Batch creates a new Astra batch query.
+func (c *Client) Batch(batchType BatchType, queries ...*Query) *BatchQuery {
+	return &BatchQuery{
+		client:    c,
+		batchType: batchType,
+		queries:   queries,
+	}
+}
+
 func (c *Client) execQuery(query *Query) (Rows, error) {
 	q, err := query.toQueryProto()
 	if err != nil {
@@ -168,4 +177,32 @@ func (c *Client) execQuery(query *Query) (Rows, error) {
 	}
 
 	return nil, fmt.Errorf("unexpected response type: %T, %v", qr.Result, qr.Result)
+}
+
+func (c *Client) execBatch(bq *BatchQuery) error {
+	b, err := bq.toProto()
+	if err != nil {
+		return fmt.Errorf("failed to create batch query proto: %w", err)
+	}
+
+	dps := c.defaultQueryParams.params
+	if dps != nil {
+		if bq.params == nil {
+			b.Parameters = dps.toBatchParamsProto()
+		} else {
+			if bq.params.keyspace != "" {
+				b.Parameters.Keyspace = &wrapperspb.StringValue{Value: dps.keyspace}
+			}
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+
+	_, err = c.sgClient.ExecuteBatchWithContext(b, ctx)
+	if err != nil {
+		return fmt.Errorf("failed to execute batch query: %w", err)
+	}
+
+	return nil
 }
