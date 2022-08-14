@@ -126,6 +126,9 @@ func convertAssign(dest, src any) error {
 			}
 			*d = nil
 			return nil
+		case *string:
+			*d = ""
+			return nil
 		}
 	}
 

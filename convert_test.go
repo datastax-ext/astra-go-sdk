@@ -93,6 +93,7 @@ func conversionTests() []conversionTest {
 		{s: uint64(123), d: &scanstr, wantstr: "123"},
 		{s: 1.5, d: &scanstr, wantstr: "1.5"},
 		{s: id, d: &scanstr, wantstr: "12345678-1234-5678-1234-567812345678"},
+		{s: nil, d: &scanstr, wantstr: ""},
 
 		// From time.Time:
 		{s: time.Unix(1, 0).UTC(), d: &scanstr, wantstr: "1970-01-01T00:00:01Z"},
