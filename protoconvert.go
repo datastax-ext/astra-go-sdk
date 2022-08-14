@@ -65,6 +65,9 @@ func valueToProto(value any) (*pb.Value, error) {
 	case net.IP:
 		return &pb.Value{Inner: &pb.Value_Inet{Inet: &pb.Inet{Value: v[:]}}}, nil
 	case *uuid.UUID:
+		if v == nil {
+			return &pb.Value{Inner: &pb.Value_Null_{Null: &pb.Value_Null{}}}, nil
+		}
 		return &pb.Value{Inner: &pb.Value_Uuid{Uuid: &pb.Uuid{Value: v[:]}}}, nil
 	case uuid.UUID:
 		return &pb.Value{Inner: &pb.Value_Uuid{Uuid: &pb.Uuid{Value: v[:]}}}, nil
