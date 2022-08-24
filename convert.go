@@ -244,6 +244,12 @@ func convertAssign(dest, src any) error {
 		}
 	case reflect.Map:
 		if src == nil {
+			dv.Set(reflect.Zero(dv.Type()))
+			return nil
+		}
+	case reflect.Array, reflect.Slice:
+		if src == nil {
+			dv.Set(reflect.Zero(dv.Type()))
 			return nil
 		}
 	}
