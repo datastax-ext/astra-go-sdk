@@ -242,6 +242,16 @@ func convertAssign(dest, src any) error {
 			dv.SetString(string(v))
 			return nil
 		}
+	case reflect.Map:
+		if src == nil {
+			dv.Set(reflect.Zero(dv.Type()))
+			return nil
+		}
+	case reflect.Array, reflect.Slice:
+		if src == nil {
+			dv.Set(reflect.Zero(dv.Type()))
+			return nil
+		}
 	}
 
 	return fmt.Errorf("unsupported Scan, storing driver.Value type %T into type %T", src, dest)
