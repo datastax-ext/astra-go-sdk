@@ -27,7 +27,7 @@ func WithTimeout(timeout time.Duration) ClientOption {
 // WithDefaultKeyspace specifies the default keyspace for client queries.
 func WithDefaultKeyspace(keyspace string) ClientOption {
 	return func(c *Client) {
-		c.defaultQueryParams.Keyspace(keyspace)
+		c.defaultQueryParams.keyspace(keyspace)
 	}
 }
 
