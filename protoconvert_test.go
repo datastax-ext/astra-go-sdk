@@ -249,3 +249,15 @@ func TestProtosToValue(t *testing.T) {
 		t.Fatalf("protosToValue(%v) unexpected difference (-want +got):\n%s", in, diff)
 	}
 }
+
+func TestNilUUIDPointer(t *testing.T) {
+	var src *uuid.UUID
+	got, err := valueToProto(src)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := &pb.Value{Inner: &pb.Value_Null_{Null: &pb.Value_Null{}}}
+	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+		t.Fatalf("valueToProto(%v) unexpected difference (-want +got):\n%s", src, diff)
+	}
+}
