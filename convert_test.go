@@ -43,6 +43,7 @@ type conversionTest struct {
 	wantbool    bool // used if d is of type *bool
 	wanterr     string
 	wantiface   any
+	wantmap     map[string]int
 	wantptr     *int64 // if non-nil, *d's pointed value must be equal to *wantptr
 	wantnil     bool   // if true, *d must be *int64(nil)
 	wantusrdef  userDefined
@@ -65,6 +66,7 @@ var (
 	scanUUID    uuid.UUID
 	scanptr     *int64
 	scaniface   any
+	scanmap     map[string]int
 )
 
 func conversionTests() []conversionTest {
@@ -162,6 +164,10 @@ func conversionTests() []conversionTest {
 		{s: true, d: &scaniface, wantiface: true},
 		{s: nil, d: &scaniface},
 		{s: []byte(nil), d: &scaniface, wantiface: []byte(nil)},
+
+		// Maps
+		{s: map[string]int{"a": 1}, d: &scanmap, wantmap: map[string]int{"a": 1}},
+		{s: nil, d: &scanmap, wantmap: nil},
 
 		// To a user-defined type
 		{s: 1.5, d: new(userDefined), wantusrdef: 1.5},
