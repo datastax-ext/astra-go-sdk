@@ -132,10 +132,10 @@ func (c *Client) Query(cql string, values ...any) *Query {
 }
 
 // Batch creates a new Astra batch query.
-func (c *Client) Batch(batchType BatchType, queries ...*Query) *BatchQuery {
+func (c *Client) Batch(queries ...*Query) *BatchQuery {
 	return &BatchQuery{
 		client:    c,
-		batchType: batchType,
+		batchType: BatchLogged,
 		queries:   queries,
 	}
 }

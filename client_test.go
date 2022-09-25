@@ -145,13 +145,13 @@ func ExampleClient_Batch() {
 	}
 
 	err = c.Batch(
-		BatchUnlogged,
 		// Table already contains a user named 'Alice'.
 		c.Query(
 			`INSERT INTO users (id, name, age) VALUES (12345678-1234-5678-1234-56781234567B,'Bob',31)`),
 		c.Query(
 			`INSERT INTO users (id, name, age) VALUES (12345678-1234-5678-1234-56781234567C,'Charles',32)`),
 	).
+		BatchType(BatchUnlogged).
 		Exec()
 	if err != nil {
 		log.Fatalf("failed to insert new example users: %v", err)
@@ -175,7 +175,6 @@ func ExampleClient_Batch_withOptions() {
 	}
 
 	err = c.Batch(
-		BatchUnlogged,
 		// Table already contains a user named 'Alice'.
 		c.Query(
 			`INSERT INTO users (id, name, age) VALUES (12345678-1234-5678-1234-56781234567B,'Bob',31)`),
@@ -183,6 +182,7 @@ func ExampleClient_Batch_withOptions() {
 			`INSERT INTO users (id, name, age) VALUES (12345678-1234-5678-1234-56781234567C,'Charles',32)`),
 	).
 		Keyspace("example").
+		BatchType(BatchUnlogged).
 		Exec()
 	if err != nil {
 		log.Fatalf("failed to insert new example users: %v", err)

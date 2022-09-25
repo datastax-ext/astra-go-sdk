@@ -111,6 +111,12 @@ type BatchQuery struct {
 	queryParams
 }
 
+// BatchType sets the batch type to use for the batch query.
+func (b *BatchQuery) BatchType(batchType BatchType) *BatchQuery {
+	b.batchType = batchType
+	return b
+}
+
 // Keyspace sets the keyspace to use for the batch query.
 func (b *BatchQuery) Keyspace(value string) *BatchQuery {
 	b.queryParams.keyspace(value)
