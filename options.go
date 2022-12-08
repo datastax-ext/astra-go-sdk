@@ -45,3 +45,30 @@ func WithTLSConfig(config *tls.Config) ClientOption {
 		c.tlsConfig = config
 	}
 }
+
+// WithInsecure specifies whether to use an insecure connection. Intended
+// localhost testing only.
+func WithInsecure(insecure bool) ClientOption {
+	return func(c *Client) {
+		c.insecure = insecure
+	}
+}
+
+// StaticTokenConnectConfig describes a connection method to use in a call to
+// NewStaticTokenClient.
+type StaticTokenConnectConfig func(*Client)
+
+// WithAstraURI specifies the Astra URI to use for the gRPC connection.
+func WithAstraURI(uri string) StaticTokenConnectConfig {
+	return func(c *Client) {
+		c.astraURI = uri
+	}
+}
+
+// WithSecureConnectBundle specifies the secure connect bundle to use for the
+// gRPC connection.
+func WithSecureConnectBundle(path string) StaticTokenConnectConfig {
+	return func(c *Client) {
+		c.scbPath = path
+	}
+}

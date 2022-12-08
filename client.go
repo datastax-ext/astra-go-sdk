@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/stargate/stargate-grpc-go-client/stargate/pkg/auth"
@@ -20,7 +21,12 @@ const (
 	defaultTimeout  = time.Second * 10
 )
 
-// Client is a client for Stargate.
+// To make testing with examples easier. Set to
+// grpc.WithTransportCredentials(insecure.NewCredentials()) for localhost
+// testing.
+var defaultInsecureCredentials = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{InsecureSkipVerify: true}))
+
+// Client is a client for Stargate.ø
 type Client struct {
 	astraURI string
 
@@ -30,9 +36,12 @@ type Client struct {
 	authUsername   string
 	authPassword   string
 
+	scbPath string
+
 	deadline       time.Duration
 	timeout        time.Duration
 	tlsConfig      *tls.Config
+	insecure       bool
 	grpcConnParams *grpc.ConnectParams
 
 	defaultQueryParams queryParams
@@ -42,13 +51,13 @@ type Client struct {
 
 // NewStaticTokenClient creates a new Client which uses the specified static
 // auth token for requests.
-func NewStaticTokenClient(astraURI, token string, opts ...ClientOption) (*Client, error) {
+func NewStaticTokenClient(token string, connection StaticTokenConnectConfig, opts ...ClientOption) (*Client, error) {
 	c := &Client{
-		astraURI: astraURI,
 		token:    token,
 		deadline: defaultDeadline,
 		timeout:  defaultTimeout,
 	}
+	connection(c)
 	if err := c.init(opts); err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
@@ -78,6 +87,18 @@ func (c *Client) init(opts []ClientOption) error {
 		opt(c)
 	}
 
+	if c.scbPath != "" {
+		if c.tlsConfig != nil {
+			return fmt.Errorf("cannot specify both bundle and TLS config")
+		}
+		bundle, err := loadBundleZipFromPath(c.scbPath)
+		if err != nil {
+			return fmt.Errorf("failed to load secure connect bundle: %w", err)
+		}
+		c.astraURI = bundle.host
+		c.tlsConfig = bundle.tlsConfig
+	}
+
 	dialOpts := []grpc.DialOption{
 		grpc.WithBlock(),
 	}
@@ -85,8 +106,12 @@ func (c *Client) init(opts []ClientOption) error {
 	useTLS := c.tlsConfig != nil
 	if useTLS {
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(c.tlsConfig)))
-	} else {
+	} else if c.insecure {
+		log.Printf("WARNING: Using insecure gRPC connection. Do not do this in production.")
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	} else {
+		log.Printf("WARNING: Skipping TLS verification for Astra calls. This is not recommended for production use")
+		dialOpts = append(dialOpts, defaultInsecureCredentials)
 	}
 
 	var creds credentials.PerRPCCredentials

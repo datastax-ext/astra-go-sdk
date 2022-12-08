@@ -74,7 +74,7 @@ func (stc *TestContainer) CreateClientWithStaticToken() (*Client, error) {
 		return nil, fmt.Errorf("failed to get auth token: %w", err)
 	}
 
-	c, err := NewStaticTokenClient(stc.grpcEndpoint, token)
+	c, err := NewStaticTokenClient(token, WithAstraURI(stc.grpcEndpoint))
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize client: %w", err)
 	}

@@ -14,14 +14,24 @@ TODO
 
 ### Testing
 
-To run fast unit tests, run :
+To run fast unit tests:
 ```shell
 go test ./... -run ^Test -test.short
 ```
 
-To run all unit tests, integration tests, and examples, run:
+To run all unit tests, integration tests, and examples:
+
 ```shell
 go test ./...
 ```
 
-These tests rely on [test containers](https://golang.testcontainers.org/), and require a running Docker daemon to work properly.
+These tests rely on [test containers](https://golang.testcontainers.org/), and
+require a running Docker daemon to work properly.
+
+To run all tests online:
+
+```shell
+go test ./... \
+  -test_scb_path=<path/to/secure-connect-bundle.zip> \
+  -test_token=<AstraCS:...>
+```
