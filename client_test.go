@@ -10,8 +10,24 @@ import (
 func ExampleNewStaticTokenClient() {
 	astraURI := "<ASTRA_CLUSTER_ID>-<ASTRA_REGION>.apps.astra.datastax.com:443"
 	token := "AstraCS:<...>"
-	c, err := NewStaticTokenClient(
-		astraURI, token,
+	c, err := NewStaticTokenClient(token,
+		WithAstraURI(astraURI),
+		WithDefaultKeyspace("example"),
+		// other options
+	)
+	if err != nil {
+		log.Fatalf("failed to initialize client: %v", err)
+	}
+
+	_, err = c.Query(`<some query>`).Exec()
+	if err != nil {
+		log.Fatalf("failed to execute query: %v", err)
+	}
+}
+
+func ExampleNewStaticTokenClient_withSecureConnectBundle() {
+	c, err := NewStaticTokenClient(token,
+		WithSecureConnectBundle("path/to/secure-connect-bundle.zip"),
 		WithDefaultKeyspace("example"),
 		// other options
 	)
@@ -45,7 +61,7 @@ func ExampleNewTableBasedTokenClient() {
 }
 
 func ExampleClient_Query_withOptions() {
-	c, err := NewStaticTokenClient(endpoint, token)
+	c, err := NewStaticTokenClient(token, WithAstraURI(endpoint))
 	if err != nil {
 		log.Fatalf("failed to initialize client: %v", err)
 	}
@@ -68,7 +84,7 @@ func ExampleClient_Query_withOptions() {
 
 func ExampleClient_Query_cast() {
 	c, err := NewStaticTokenClient(
-		endpoint, token,
+		token, WithAstraURI(endpoint),
 		WithDefaultKeyspace("example"),
 	)
 	if err != nil {
@@ -99,7 +115,7 @@ func ExampleClient_Query_cast() {
 
 func ExampleClient_Query_scan() {
 	c, err := NewStaticTokenClient(
-		endpoint, token,
+		token, WithAstraURI(endpoint),
 		WithDefaultKeyspace("example"),
 	)
 	if err != nil {
@@ -137,7 +153,7 @@ func ExampleClient_Query_scan() {
 
 func ExampleClient_Batch() {
 	c, err := NewStaticTokenClient(
-		endpoint, token,
+		token, WithAstraURI(endpoint),
 		WithDefaultKeyspace("example"),
 	)
 	if err != nil {
@@ -169,7 +185,7 @@ func ExampleClient_Batch() {
 }
 
 func ExampleClient_Batch_withOptions() {
-	c, err := NewStaticTokenClient(endpoint, token)
+	c, err := NewStaticTokenClient(token, WithAstraURI(endpoint))
 	if err != nil {
 		log.Fatalf("failed to initialize client: %v", err)
 	}

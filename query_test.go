@@ -15,7 +15,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
-	c, err := stc.CreateClientWithStaticToken()
+	c, err := createTestClient()
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -146,7 +146,7 @@ func TestClient_Query_Exec_emptyCollections(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
-	c, err := stc.CreateClientWithStaticToken()
+	c, err := createTestClient()
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
