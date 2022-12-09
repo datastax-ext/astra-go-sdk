@@ -17,6 +17,19 @@ type Row struct {
 	values []any
 }
 
+// Scan copies the values from the row into the provided pointers.
+func (r *Row) Scan(dest ...any) error {
+	if len(r.values) != len(dest) {
+		return fmt.Errorf("row has %d values, got %d pointers", len(r.values), len(dest))
+	}
+	for i, v := range r.values {
+		if err := convertAssign(dest[i], v); err != nil {
+			return fmt.Errorf("failed to assign in row %q at index %d: %w", r, i, err)
+		}
+	}
+	return nil
+}
+
 // Values returns the values in the row.
 func (r *Row) Values() []any {
 	return r.values
@@ -26,9 +39,6 @@ func (r *Row) Values() []any {
 func (r *Row) String() string {
 	return fmt.Sprintf("%v", r.values)
 }
-
-// TODO: implement scanning of values into Go types.
-// TODO: implement scanning of values into structs.
 
 // Rows represents a list of Astra table rows.
 type Rows []Row

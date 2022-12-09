@@ -8,11 +8,13 @@ package astra
 
 import (
 	"fmt"
+	"math/big"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 var someTime = time.Unix(123, 0)
@@ -28,41 +30,48 @@ type conversionTest struct {
 	s, d any // source and destination
 
 	// following are used if they're non-zero
-	wantint    int64
-	wantuint   uint64
-	wantstr    string
-	wantbytes  []byte
-	wantf32    float32
-	wantf64    float64
-	wanttime   time.Time
-	wantUUID   uuid.UUID
-	wantbool   bool // used if d is of type *bool
-	wanterr    string
-	wantiface  any
-	wantptr    *int64 // if non-nil, *d's pointed value must be equal to *wantptr
-	wantnil    bool   // if true, *d must be *int64(nil)
-	wantusrdef userDefined
-	wantusrstr userDefinedString
+	wantint     int64
+	wantuint    uint64
+	wantBigInt  *big.Int
+	wantstr     string
+	wantbytes   []byte
+	wantf32     float32
+	wantf64     float64
+	wantDecimal *decimal.Decimal
+	wanttime    time.Time
+	wantUUID    uuid.UUID
+	wantbool    bool // used if d is of type *bool
+	wanterr     string
+	wantiface   any
+	wantmap     map[string]int
+	wantptr     *int64 // if non-nil, *d's pointed value must be equal to *wantptr
+	wantnil     bool   // if true, *d must be *int64(nil)
+	wantusrdef  userDefined
+	wantusrstr  userDefinedString
 }
 
 // Target variables for scanning into.
 var (
-	scanstr    string
-	scanbytes  []byte
-	scanint    int
-	scanuint8  uint8
-	scanuint16 uint16
-	scanbool   bool
-	scanf32    float32
-	scanf64    float64
-	scantime   time.Time
-	scanUUID   uuid.UUID
-	scanptr    *int64
-	scaniface  any
+	scanstr     string
+	scanbytes   []byte
+	scanint     int
+	scanuint8   uint8
+	scanuint16  uint16
+	scanBigInt  *big.Int
+	scanbool    bool
+	scanf32     float32
+	scanf64     float64
+	scanDecimal *decimal.Decimal
+	scantime    time.Time
+	scanUUID    uuid.UUID
+	scanptr     *int64
+	scaniface   any
+	scanmap     map[string]int
 )
 
 func conversionTests() []conversionTest {
 	id := uuid.MustParse("12345678-1234-5678-1234-567812345678")
+	dec, _ := decimal.NewFromString("1.23456789")
 
 	// Return a fresh instance to test so "go test -count 2" works correctly.
 	return []conversionTest{
@@ -70,6 +79,9 @@ func conversionTests() []conversionTest {
 		{s: "foo", d: &scanstr, wantstr: "foo"},
 		{s: 123, d: &scanint, wantint: 123},
 		{s: someTime, d: &scantime, wanttime: someTime},
+		{s: dec, d: &scanDecimal, wantDecimal: &dec},
+		{s: big.NewInt(123), d: &scanBigInt, wantBigInt: big.NewInt(123)},
+		{s: id, d: &scanUUID, wantUUID: id},
 
 		// To strings
 		{s: "string", d: &scanstr, wantstr: "string"},
@@ -83,6 +95,7 @@ func conversionTests() []conversionTest {
 		{s: uint64(123), d: &scanstr, wantstr: "123"},
 		{s: 1.5, d: &scanstr, wantstr: "1.5"},
 		{s: id, d: &scanstr, wantstr: "12345678-1234-5678-1234-567812345678"},
+		{s: nil, d: &scanstr, wantstr: ""},
 
 		// From time.Time:
 		{s: time.Unix(1, 0).UTC(), d: &scanstr, wantstr: "1970-01-01T00:00:01Z"},
@@ -133,24 +146,28 @@ func conversionTests() []conversionTest {
 		{s: 2, d: &scanbool, wanterr: "unsupported Scan, storing driver.Value type int into type *bool"},
 
 		// Floats
-		{s: float64(1.5), d: &scanf64, wantf64: float64(1.5)},
+		{s: 1.5, d: &scanf64, wantf64: 1.5},
 		{s: int64(1), d: &scanf64, wantf64: float64(1)},
-		{s: float64(1.5), d: &scanf32, wantf32: float32(1.5)},
+		{s: 1.5, d: &scanf32, wantf32: float32(1.5)},
 		{s: "1.5", d: &scanf32, wantf32: float32(1.5)},
-		{s: "1.5", d: &scanf64, wantf64: float64(1.5)},
+		{s: "1.5", d: &scanf64, wantf64: 1.5},
 
 		// Pointers
 		{s: any(nil), d: &scanptr, wantnil: true},
 		{s: int64(42), d: &scanptr, wantptr: &answer},
 
 		// To interface{}
-		{s: float64(1.5), d: &scaniface, wantiface: float64(1.5)},
+		{s: 1.5, d: &scaniface, wantiface: 1.5},
 		{s: int64(1), d: &scaniface, wantiface: int64(1)},
 		{s: "str", d: &scaniface, wantiface: "str"},
 		{s: []byte("byteslice"), d: &scaniface, wantiface: []byte("byteslice")},
 		{s: true, d: &scaniface, wantiface: true},
 		{s: nil, d: &scaniface},
 		{s: []byte(nil), d: &scaniface, wantiface: []byte(nil)},
+
+		// Maps
+		{s: map[string]int{"a": 1}, d: &scanmap, wantmap: map[string]int{"a": 1}},
+		{s: nil, d: &scanmap, wantmap: nil},
 
 		// To a user-defined type
 		{s: 1.5, d: new(userDefined), wantusrdef: 1.5},

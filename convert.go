@@ -11,11 +11,13 @@ package astra
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"reflect"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 var errNilPtr = errors.New("destination pointer is nil")
@@ -57,6 +59,24 @@ func convertAssign(dest, src any) error {
 				return errNilPtr
 			}
 			*d = cloneBytes(s)
+			return nil
+		}
+	case big.Int:
+		switch d := dest.(type) {
+		case *big.Int:
+			if d == nil {
+				return errNilPtr
+			}
+			*d = s
+			return nil
+		}
+	case decimal.Decimal:
+		switch d := dest.(type) {
+		case *decimal.Decimal:
+			if d == nil {
+				return errNilPtr
+			}
+			*d = s
 			return nil
 		}
 	case time.Time:
@@ -105,6 +125,9 @@ func convertAssign(dest, src any) error {
 				return errNilPtr
 			}
 			*d = nil
+			return nil
+		case *string:
+			*d = ""
 			return nil
 		}
 	}
@@ -220,6 +243,16 @@ func convertAssign(dest, src any) error {
 			return nil
 		case []byte:
 			dv.SetString(string(v))
+			return nil
+		}
+	case reflect.Map:
+		if src == nil {
+			dv.Set(reflect.Zero(dv.Type()))
+			return nil
+		}
+	case reflect.Array, reflect.Slice:
+		if src == nil {
+			dv.Set(reflect.Zero(dv.Type()))
 			return nil
 		}
 	}

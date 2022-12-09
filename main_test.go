@@ -2,14 +2,32 @@ package astra
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"testing"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
-	stc             *TestContainer
-	endpoint, token string
+	stc                         *TestContainer
+	endpoint, token             string
+	testSecureConnectBundlePath = flag.String(
+		"test_scb_path",
+		"",
+		"If set, performs integration tests online using a client configured with the secure connect bundle at the given path. Also requires test_token to be set.",
+	)
+	testToken = flag.String(
+		"test_token",
+		"",
+		"If set, performs integration tests online using a client configured with the given token.",
+	)
+
+	createTestClient = func() (*Client, error) {
+		return stc.CreateClientWithStaticToken()
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -21,32 +39,63 @@ func TestMain(m *testing.M) {
 	}
 
 	var err error
-	stc, err = NewStargateTestContainer()
-	if err != nil {
-		log.Fatalf("failed to start Stargate container: %v", err)
+	if *testSecureConnectBundlePath != "" {
+		if *testToken == "" {
+			log.Fatal("test_token must be set if test_scb_path is set")
+		}
+		token = *testToken
+
+		bundle, err := loadBundleZipFromPath(*testSecureConnectBundlePath)
+		if err != nil {
+			log.Fatalf("failed to load secure connect bundle: %v", err)
+		}
+		endpoint = bundle.host
+
+		createTestClient = func() (*Client, error) {
+			c, err := NewStaticTokenClient(*testToken, WithSecureConnectBundle(*testSecureConnectBundlePath))
+			if err != nil {
+				return nil, fmt.Errorf("failed to initialize client: %w", err)
+			}
+
+			return c, nil
+		}
+	} else {
+		defaultInsecureCredentials = grpc.WithTransportCredentials(insecure.NewCredentials())
+
+		stc, err = NewStargateTestContainer()
+		if err != nil {
+			log.Fatalf("failed to start Stargate container: %v", err)
+		}
+		endpoint = stc.grpcEndpoint
+		token, err = stc.getAuthToken()
+		if err != nil {
+			log.Fatalf("failed to get auth token: %v", err)
+		}
 	}
 
-	endpoint = stc.grpcEndpoint
-	token, err = stc.getAuthToken()
-	if err != nil {
-		log.Fatalf("failed to get auth token: %v", err)
-	}
-
-	c, err := stc.CreateClientWithStaticToken()
+	c, err := createTestClient()
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 
-	_, err = c.Query(`CREATE KEYSPACE IF NOT EXISTS example WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1}`).Exec()
-	if err != nil {
-		log.Fatalf("failed to create example keyspace: %v", err)
+	// For online testing, create "example" and "test" keyspaces manually.
+	if stc != nil {
+		_, err = c.Query(`CREATE KEYSPACE IF NOT EXISTS example WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1}`).Exec()
+		if err != nil {
+			log.Fatalf("failed to create example keyspace: %v", err)
+		}
+
+		_, err = c.Query(`CREATE KEYSPACE IF NOT EXISTS test WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1}`).Exec()
+		if err != nil {
+			log.Fatalf("failed to create test keyspace: %v", err)
+		}
 	}
 
 	_, err = c.Query(`CREATE TABLE IF NOT EXISTS example.users (
 		id uuid PRIMARY KEY,
 		name text,
 		age int
-	)`).Exec()
+	) WITH default_time_to_live = 30`).Exec()
 	if err != nil {
 		log.Fatalf("failed to create example users table: %v", err)
 	}
@@ -56,11 +105,6 @@ func TestMain(m *testing.M) {
 		Exec()
 	if err != nil {
 		log.Fatalf("failed to insert example user Alice: %v", err)
-	}
-
-	_, err = c.Query(`CREATE KEYSPACE IF NOT EXISTS test WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1}`).Exec()
-	if err != nil {
-		log.Fatalf("failed to create test keyspace: %v", err)
 	}
 
 	_, err = c.Query(`CREATE TABLE IF NOT EXISTS test.all_types (
@@ -78,6 +122,7 @@ func TestMain(m *testing.M) {
 		int_col int,
 		smallint_col smallint,
 		tinyint_col tinyint,
+		varint_col varint,
 		timeuuid_col timeuuid,
 		map_col map<int, text>,
 		map_list_col map<text, frozen<list<int>>>,
@@ -85,7 +130,7 @@ func TestMain(m *testing.M) {
 		list_list_col list<frozen<list<text>>>,
 		set_col set<text>,
 		tuple_col tuple<int, text, float>
-	)`).Exec()
+	) WITH default_time_to_live = 30`).Exec()
 	if err != nil {
 		log.Fatalf("failed to create test table: %v", err)
 	}

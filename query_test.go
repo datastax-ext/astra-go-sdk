@@ -1,6 +1,8 @@
 package astra
 
 import (
+	"math"
+	"math/big"
 	"net"
 	"testing"
 
@@ -13,7 +15,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
-	c, err := stc.CreateClientWithStaticToken()
+	c, err := createTestClient()
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -26,22 +28,23 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 	}
 
 	vals := []interface{}{
-		id,                                     // id
-		"alpha",                                // ascii_col
-		"bravo",                                // text_col
-		"charlie",                              // varchar_col
-		[]byte("foo"),                          // blob_col
-		true,                                   // boolean_col
+		id,                       // id
+		"alpha",                  // ascii_col
+		"bravo",                  // text_col
+		"charlie",                // varchar_col
+		[]byte("foo"),            // blob_col
+		true,                     // boolean_col
 		dec,                      // decimalvalue
-		2.2,                                    // double_col
-		float32(3.3),                           // float_col
-		net.ParseIP("127.0.0.1"),               // inet_col
-		1,                                      // bigint_col
-		2,                                      // int_col
-		3,                                      // smallint_col
-		5,                                      // tinyint_col
-		&timeUUID,                              // timeuuid_col
-		map[int]string{1: "a", 2: "b", 3: "c"}, // map_col
+		2.2,                      // double_col
+		float32(3.3),             // float_col
+		net.ParseIP("127.0.0.1"), // inet_col
+		1,                        // bigint_col
+		2,                        // int_col
+		3,                        // smallint_col
+		5,                        // tinyint_col
+		big.NewInt(0).Sub(big.NewInt(math.MinInt64), big.NewInt(math.MaxInt64)), // varintvalue
+		&timeUUID,                                  // timeuuid_col
+		map[int]string{1: "a", 2: "b", 3: "c"},     // map_col
 		map[string][]int{"a": {1, 2}, "b": {3, 4}}, // map_list_col
 		[]string{"a", "b", "c"},                    // list_col
 		[][]string{{"a", "b"}, {"c", "d"}},         // list_list_col
@@ -64,6 +67,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		int_col,
 		smallint_col,
 		tinyint_col,
+		varint_col,
 		timeuuid_col,
 		map_col,
 		map_list_col,
@@ -71,7 +75,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		list_list_col,
 		set_col,
 		tuple_col
-	) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+	) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 		vals...,
 	).Exec()
 	if err != nil {
@@ -94,6 +98,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 			int_col,
 			smallint_col,
 			tinyint_col,
+			varint_col,
 			timeuuid_col,
 			map_col,
 			map_list_col,
@@ -108,22 +113,23 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 	}
 
 	wantVals := []interface{}{
-		id,                                       // id
-		"alpha",                                  // ascii_col
-		"bravo",                                  // text_col
-		"charlie",                                // varchar_col
-		[]byte("foo"),                            // blob_col
-		true,                                     // boolean_col
+		id,                       // id
+		"alpha",                  // ascii_col
+		"bravo",                  // text_col
+		"charlie",                // varchar_col
+		[]byte("foo"),            // blob_col
+		true,                     // boolean_col
 		dec,                      // decimalvalue
-		2.2,                                      // double_col
-		float32(3.3),                             // float_col
-		net.ParseIP("127.0.0.1"),                 // inet_col
-		int64(1),                                 // bigint_col
-		int64(2),                                 // int_col
-		int64(3),                                 // smallint_col
-		int64(5),                                 // tinyint_col
-		timeUUID,                                 // timeuuid_col
-		map[int64]string{1: "a", 2: "b", 3: "c"}, // map_col
+		2.2,                      // double_col
+		float32(3.3),             // float_col
+		net.ParseIP("127.0.0.1"), // inet_col
+		int64(1),                 // bigint_col
+		int64(2),                 // int_col
+		int64(3),                 // smallint_col
+		int64(5),                 // tinyint_col
+		big.NewInt(0).Sub(big.NewInt(math.MinInt64), big.NewInt(math.MaxInt64)), // varintvalue
+		timeUUID,                                     // timeuuid_col
+		map[int64]string{1: "a", 2: "b", 3: "c"},     // map_col
 		map[string][]int64{"a": {1, 2}, "b": {3, 4}}, // map_list_col
 		[]string{"a", "b", "c"},                      // list_col
 		[][]string{{"a", "b"}, {"c", "d"}},           // list_list_col
@@ -131,7 +137,7 @@ func TestClient_Query_Exec_allTypes(t *testing.T) {
 		[]interface{}{int64(3), "bar", float32(2.1)}, // tuple_col
 	}
 
-	if diff := cmp.Diff(wantVals, got[0].Values()); diff != "" {
+	if diff := cmp.Diff(wantVals, got[0].Values(), cmp.AllowUnexported(big.Int{})); diff != "" {
 		t.Fatalf("got[0].Values() unexpected difference (-want +got):\n%s", diff)
 	}
 }
@@ -140,7 +146,7 @@ func TestClient_Query_Exec_emptyCollections(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
-	c, err := stc.CreateClientWithStaticToken()
+	c, err := createTestClient()
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -188,7 +194,7 @@ func TestClient_Query_Exec_emptyCollections(t *testing.T) {
 		nil, // tuple_col
 	}
 
-	if diff := cmp.Diff(wantVals, got[0].Values()); diff != "" {
+	if diff := cmp.Diff(wantVals, got[0].Values(), cmp.AllowUnexported(big.Int{})); diff != "" {
 		t.Fatalf("got[0].Values() unexpected difference (-want +got):\n%s", diff)
 	}
 }
