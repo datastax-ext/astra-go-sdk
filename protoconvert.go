@@ -161,7 +161,7 @@ func protoToValue(value *pb.Value, spec *pb.TypeSpec) (any, error) {
 	case *pb.TypeSpec_List_:
 		r, err = protoToSlice(value.GetCollection().GetElements(), ts.List.Element)
 	case *pb.TypeSpec_Set_:
-		r, err = protoToSlice(value.GetCollection().GetElements(), ts.Set.Element)
+		r, err = protoToSetMap(value.GetCollection().GetElements(), ts.Set.Element)
 	case *pb.TypeSpec_Tuple_:
 		r, err = tupleProtoToSlice(value.GetCollection().GetElements(), ts.Tuple)
 	default:
@@ -273,6 +273,36 @@ func protoToSlice(values []*pb.Value, spec *pb.TypeSpec) (any, error) {
 		s.Index(i).Set(reflect.ValueOf(v))
 	}
 	return s.Interface(), nil
+}
+
+func protoToSetMap(values []*pb.Value, spec *pb.TypeSpec) (any, error) {
+	l := len(values)
+	if l == 0 {
+		return nil, nil
+	}
+
+	type st struct{}
+	ev := reflect.ValueOf(st{})
+
+	k0, err := protoToValue(values[0], spec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert initial map key: %w", err)
+	}
+
+	kt := reflect.TypeOf(k0)
+	vt := reflect.TypeOf(st{})
+	mt := reflect.MapOf(kt, vt)
+	m := reflect.MakeMapWithSize(mt, l)
+	m.SetMapIndex(reflect.ValueOf(k0), ev)
+
+	for i := 2; i < l; i += 2 {
+		k, err := protoToValue(values[i], spec)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert map key: %w", err)
+		}
+		m.SetMapIndex(reflect.ValueOf(k), ev)
+	}
+	return m.Interface(), nil
 }
 
 func tupleProtoToSlice(values []*pb.Value, spec *pb.TypeSpec_Tuple) (any, error) {
